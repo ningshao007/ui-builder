@@ -30,16 +30,18 @@ interface CanvasProps {
   setComponents: React.Dispatch<React.SetStateAction<ComponentData[]>>;
   selectedComponentId: string | null;
   setSelectedComponentId: React.Dispatch<React.SetStateAction<string | null>>;
+  isPreview?: boolean;
 }
 
 const Canvas: React.FC<CanvasProps> = ({
   components,
   setComponents,
   selectedComponentId,
-  setSelectedComponentId
+  setSelectedComponentId,
+  isPreview
 }) => {
   const [{ isOver }, drop] = useDrop(() => ({
-    accept: "COMPONENT",
+    accept: ["COMPONENT", "CANVAS_COMPONENT"],
     drop: (
       item: { type: string; defaultProps: Record<string, any> },
       monitor
@@ -52,7 +54,9 @@ const Canvas: React.FC<CanvasProps> = ({
         id: uuidv4(),
         type: item.type,
         props: { ...item.defaultProps },
-        children: []
+        children: [],
+        path: [],
+        isContainer: item.type === "Container"
       };
 
       setComponents((prev) => [...prev, newComponent]);
@@ -67,17 +71,67 @@ const Canvas: React.FC<CanvasProps> = ({
     setSelectedComponentId(id);
   };
 
-  const handleComponentMove = (dragId: string, hoverId: string) => {
+  const handleComponentMove = (
+    dragId: string,
+    hoverId: string,
+    dropPosition: "inside" | "before" | "after"
+  ) => {
     setComponents((prevComponents) => {
-      const dragIndex = prevComponents.findIndex((c) => c.id === dragId);
-      const hoverIndex = prevComponents.findIndex((c) => c.id === hoverId);
+      const newComponents = JSON.parse(JSON.stringify(prevComponents));
 
-      if (dragIndex === -1 || hoverIndex === -1) return prevComponents;
+      // 查找要移动的组件和目标组件
+      const findComponent = (
+        comps: ComponentData[],
+        id: string
+      ): [ComponentData | null, ComponentData[] | null] => {
+        for (let i = 0; i < comps.length; i++) {
+          if (comps[i].id === id) {
+            const [comp] = comps.splice(i, 1);
+            return [comp, comps];
+          }
+          if (comps[i].children) {
+            const [found, parent] = findComponent(comps[i].children, id);
+            if (found) {
+              return [found, parent];
+            }
+          }
+        }
+        return [null, null];
+      };
 
-      const newComponents = [...prevComponents];
-      const [removed] = newComponents.splice(dragIndex, 1);
-      newComponents.splice(hoverIndex, 0, removed);
+      const [dragComponent] = findComponent(newComponents, dragId);
+      if (!dragComponent) return prevComponents;
 
+      const insertComponent = (
+        comps: ComponentData[],
+        id: string,
+        component: ComponentData,
+        position: "inside" | "before" | "after"
+      ) => {
+        for (let i = 0; i < comps.length; i++) {
+          if (comps[i].id === id) {
+            if (position === "inside" && comps[i].isContainer) {
+              comps[i].children.push({ ...component, parent: comps[i].id });
+              return true;
+            } else if (position === "before") {
+              comps.splice(i, 0, component);
+              return true;
+            } else if (position === "after") {
+              comps.splice(i + 1, 0, component);
+              return true;
+            }
+          }
+          if (
+            comps[i].children &&
+            insertComponent(comps[i].children, id, component, position)
+          ) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      insertComponent(newComponents, hoverId, dragComponent, dropPosition);
       return newComponents;
     });
   };
@@ -107,6 +161,7 @@ const Canvas: React.FC<CanvasProps> = ({
               onMove={handleComponentMove}
               components={components}
               setComponents={setComponents}
+              path={[component.id]} // 添加path属性
             />
           ))
         )}

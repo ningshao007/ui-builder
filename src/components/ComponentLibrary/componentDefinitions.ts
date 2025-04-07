@@ -5,6 +5,7 @@ export const componentDefinitions: ComponentDefinition[] = [
     type: "Container",
     name: "容器",
     icon: "container",
+    isContainer: true,
     defaultProps: {
       width: "100%",
       height: "200px",
@@ -27,6 +28,7 @@ export const componentDefinitions: ComponentDefinition[] = [
     type: "Text",
     name: "文本",
     icon: "font-size",
+    isContainer: false,
     defaultProps: {
       content: "文本内容",
       fontSize: "16px",
@@ -60,6 +62,7 @@ export const componentDefinitions: ComponentDefinition[] = [
     type: "Button",
     name: "按钮",
     icon: "button",
+    isContainer: false,
     defaultProps: {
       text: "按钮",
       type: "primary",
@@ -94,6 +97,7 @@ export const componentDefinitions: ComponentDefinition[] = [
     type: "Image",
     name: "图片",
     icon: "picture",
+    isContainer: false,
     defaultProps: {
       src: "https://via.placeholder.com/150",
       alt: "图片",

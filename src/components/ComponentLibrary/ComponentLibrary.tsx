@@ -39,6 +39,7 @@ interface DraggableComponentProps {
   name: string;
   icon: string;
   defaultProps: Record<string, any>;
+  isContainer?: boolean;
 }
 
 const getIconComponent = (iconName: string) => {
@@ -60,11 +61,12 @@ const DraggableComponent: React.FC<DraggableComponentProps> = ({
   type,
   name,
   icon,
-  defaultProps
+  defaultProps,
+  isContainer
 }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "COMPONENT",
-    item: { type, defaultProps },
+    item: { type, defaultProps, isContainer },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging()
     })
@@ -89,6 +91,7 @@ const ComponentLibrary: React.FC = () => {
               name={component.name}
               icon={component.icon}
               defaultProps={component.defaultProps}
+              isContainer={component.isContainer}
             />
           </Col>
         ))}
