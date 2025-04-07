@@ -7,6 +7,8 @@ import ComponentLibrary from "./components/ComponentLibrary/ComponentLibrary";
 import Canvas from "./components/Canvas/Canvas";
 import PropertyEditor from "./components/PropertyEditor/PropertyEditor";
 import { ComponentData } from "./types";
+import Toolbar from "./components/Toolbar/Toolbar";
+import { useProjectState } from "./hooks/useProjectState";
 
 const { Header, Content } = Layout;
 const { Title } = Typography;
@@ -28,13 +30,21 @@ const ContentStyled = styled(Content)`
 `;
 
 const App: React.FC = () => {
-  const [components, setComponents] = useState<ComponentData[]>([]);
+  const { components, setComponents, saveProject, loadProject } =
+    useProjectState();
+
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(
     null
   );
+  const [isPreview, setIsPreview] = useState(false);
 
   const selectedComponent =
     components.find((c) => c.id === selectedComponentId) || null;
+
+  const handlePreview = () => {
+    setIsPreview(!isPreview);
+    setSelectedComponentId(null);
+  };
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -45,25 +55,35 @@ const App: React.FC = () => {
           </Title>
         </HeaderStyled>
         <ContentStyled>
+          <Toolbar
+            onSave={saveProject}
+            onLoad={loadProject}
+            onPreview={handlePreview}
+          />
           <Row gutter={[24, 24]}>
-            <Col span={6}>
-              <ComponentLibrary />
-            </Col>
-            <Col span={12}>
+            {!isPreview && (
+              <Col span={6}>
+                <ComponentLibrary />
+              </Col>
+            )}
+            <Col span={isPreview ? 24 : 12}>
               <Canvas
                 components={components}
                 setComponents={setComponents}
                 selectedComponentId={selectedComponentId}
                 setSelectedComponentId={setSelectedComponentId}
+                isPreview={isPreview}
               />
             </Col>
-            <Col span={6}>
-              <PropertyEditor
-                selectedComponent={selectedComponent}
-                components={components}
-                setComponents={setComponents}
-              />
-            </Col>
+            {!isPreview && (
+              <Col span={6}>
+                <PropertyEditor
+                  selectedComponent={selectedComponent}
+                  components={components}
+                  setComponents={setComponents}
+                />
+              </Col>
+            )}
           </Row>
         </ContentStyled>
       </AppContainer>
