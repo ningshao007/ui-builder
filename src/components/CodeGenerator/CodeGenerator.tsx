@@ -3,8 +3,6 @@ import styled from "styled-components";
 import { ComponentData } from "../../types";
 import { Card, Typography, Button } from "antd";
 
-const { Title, Paragraph } = Typography;
-
 const CodeContainer = styled(Card)`
   margin-top: 20px;
 `;

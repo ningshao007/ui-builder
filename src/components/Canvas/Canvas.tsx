@@ -157,11 +157,12 @@ const Canvas: React.FC<CanvasProps> = ({
               key={component.id}
               component={component}
               isSelected={component.id === selectedComponentId}
+              selectedComponentId={selectedComponentId} // 正确传递类型
               onSelect={handleComponentSelect}
               onMove={handleComponentMove}
               components={components}
               setComponents={setComponents}
-              path={[component.id]} // 添加path属性
+              path={[component.id]}
             />
           ))
         )}

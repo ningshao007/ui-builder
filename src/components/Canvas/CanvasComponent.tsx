@@ -46,6 +46,7 @@ const DeleteButton = styled.button`
 interface CanvasComponentProps {
   component: ComponentData;
   isSelected: boolean;
+  selectedComponentId: string | null; // 修改类型为 string | null
   onSelect: (id: string) => void;
   onMove: (
     dragId: string,
@@ -64,8 +65,10 @@ const CanvasComponent: React.FC<CanvasComponentProps> = ({
   onMove,
   components,
   setComponents,
-  path
+  path,
+  selectedComponentId
 }) => {
+  const ref = React.useRef<HTMLDivElement>(null);
   const [{ isDragging }, drag] = useDrag({
     type: "CANVAS_COMPONENT",
     item: {
@@ -125,8 +128,13 @@ const CanvasComponent: React.FC<CanvasComponentProps> = ({
     })
   });
 
-  const ref = React.useRef<HTMLDivElement>(null);
-  const dragDropRef = drag(drop(ref));
+  // 修正 ref 组合方式
+  React.useEffect(() => {
+    if (ref.current) {
+      drag(ref.current);
+      drop(ref.current);
+    }
+  }, [drag, drop]);
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -144,18 +152,21 @@ const CanvasComponent: React.FC<CanvasComponentProps> = ({
               backgroundColor: component.props.backgroundColor,
               padding: component.props.padding
             }}
+            // 修改这里：移除 onClick 事件，改用其他方式处理嵌套组件的点击
           >
             {component.children?.map((child) => (
-              <CanvasComponent
-                key={child.id}
-                component={child}
-                isSelected={child.id === isSelected}
-                onSelect={onSelect}
-                onMove={onMove}
-                components={components}
-                setComponents={setComponents}
-                path={[...path, child.id]}
-              />
+              <div key={child.id} onClick={(e) => e.stopPropagation()}>
+                <CanvasComponent
+                  component={child}
+                  isSelected={child.id === selectedComponentId}
+                  selectedComponentId={selectedComponentId}
+                  onSelect={onSelect}
+                  onMove={onMove}
+                  components={components}
+                  setComponents={setComponents}
+                  path={[...path, child.id]}
+                />
+              </div>
             ))}
           </div>
         );
@@ -199,7 +210,7 @@ const CanvasComponent: React.FC<CanvasComponentProps> = ({
 
   return (
     <ComponentWrapper
-      ref={dragDropRef}
+      ref={ref} // 改用单个 ref
       isSelected={isSelected}
       isOver={isOver}
       onClick={() => onSelect(component.id)}

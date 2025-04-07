@@ -32,14 +32,36 @@ const ContentStyled = styled(Content)`
 const App: React.FC = () => {
   const { components, setComponents, saveProject, loadProject } =
     useProjectState();
-
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(
     null
   );
   const [isPreview, setIsPreview] = useState(false);
 
-  const selectedComponent =
-    components.find((c) => c.id === selectedComponentId) || null;
+  // 深度查找选中的组件
+  const findSelectedComponent = (
+    components: ComponentData[],
+    id: string | null
+  ): ComponentData | null => {
+    if (!id) return null;
+
+    for (const comp of components) {
+      if (comp.id === id) {
+        return comp;
+      }
+      if (comp.children?.length > 0) {
+        const found = findSelectedComponent(comp.children, id);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  };
+
+  const selectedComponent = findSelectedComponent(
+    components,
+    selectedComponentId
+  );
 
   const handlePreview = () => {
     setIsPreview(!isPreview);

@@ -57,20 +57,34 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({
   }
 
   const handlePropertyChange = (propName: string, value: any) => {
-    setComponents(
-      components.map((comp) => {
-        if (comp.id === selectedComponent.id) {
-          return {
-            ...comp,
-            props: {
-              ...comp.props,
-              [propName]: value
-            }
-          };
-        }
-        return comp;
-      })
-    );
+    if (!selectedComponent) return;
+
+    setComponents((prevComponents) => {
+      const updateComponentInTree = (
+        comps: ComponentData[]
+      ): ComponentData[] => {
+        return comps.map((comp) => {
+          if (comp.id === selectedComponent.id) {
+            return {
+              ...comp,
+              props: {
+                ...comp.props,
+                [propName]: value
+              }
+            };
+          }
+          if (comp.children?.length > 0) {
+            return {
+              ...comp,
+              children: updateComponentInTree(comp.children)
+            };
+          }
+          return comp;
+        });
+      };
+
+      return updateComponentInTree(prevComponents);
+    });
   };
 
   const renderPropertyEditor = (propDef: any) => {
